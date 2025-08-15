@@ -1,22 +1,26 @@
 services:
-  app:
+  crashcaster:
+    build: .
     image: crashcaster:latest
     container_name: crashcaster
-    ports:
-      - "8501:8501"
     environment:
-      - PORT=8501
-    volumes:
-      - ./offline:/app/offline
-      - ./cache:/app/cache
+      - PORT=8080
+    ports:
+      - "8501:8080"
     restart: unless-stopped
 
   ngrok:
-    image: ngrok/ngrok:latest
+    image: ngrok/ngrok:latest        # official multi-arch image (works on Apple Silicon)
     container_name: crashcaster-ngrok
     environment:
       - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
-    command: http --url=http://app:8501
+    # Print logs to stdout (so docker logs shows the URL) and tunnel to the app
+    command: >
+      http --log=stdout --log-format=logfmt
+      --request-header-add='X-Forwarded-Proto:https'
+      http://crashcaster:8080
+    ports:
+      - "4040:4040"                  # publish ngrok's local API so you can query the URL
     depends_on:
-      - app
+      - crashcaster
     restart: unless-stopped
