@@ -1,0 +1,22 @@
+services:
+  app:
+    image: crashcaster:latest
+    container_name: crashcaster
+    ports:
+      - "8501:8501"
+    environment:
+      - PORT=8501
+    volumes:
+      - ./offline:/app/offline
+      - ./cache:/app/cache
+    restart: unless-stopped
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: crashcaster-ngrok
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    command: http --url=http://app:8501
+    depends_on:
+      - app
+    restart: unless-stopped
